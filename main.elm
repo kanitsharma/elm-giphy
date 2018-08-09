@@ -60,8 +60,7 @@ type alias Image =
 
 decodeGif : Decode.Decoder Urls
 decodeGif =
-    Decode.map Urls
-        (Decode.field "data" decodeList)
+    Decode.map Urls << Decode.field "data" <| decodeList
 
 
 decodeList : Decode.Decoder (List Url)
@@ -71,7 +70,14 @@ decodeList =
 
 decodeUrl : Decode.Decoder Url
 decodeUrl =
-    Decode.map Url <| Decode.field "images" <| Decode.map Images <| Decode.field "original_still" <| Decode.map Image <| Decode.field "url" Decode.string
+    Decode.map Url
+        << Decode.field "images"
+        << Decode.map Images
+        << Decode.field "original_still"
+        << Decode.map Image
+        << Decode.field "url"
+    <|
+        Decode.string
 
 
 
@@ -110,7 +116,7 @@ fetchGifs tag =
         url =
             "https://api.giphy.com/v1/gifs/search?q=" ++ tag ++ "&api_key=" ++ model.api_key
     in
-        Http.send NewGifs (Http.get url decodeGif)
+        Http.send NewGifs << Http.get url <| decodeGif
 
 
 
