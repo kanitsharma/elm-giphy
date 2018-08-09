@@ -71,14 +71,7 @@ decodeList =
 
 decodeUrl : Decode.Decoder Url
 decodeUrl =
-    Decode.map Url
-        (Decode.field "images" <|
-            Decode.map Images
-                (Decode.field "original_still" <|
-                    Decode.map Image
-                        (Decode.field "url" Decode.string)
-                )
-        )
+    Decode.map Url <| Decode.field "images" <| Decode.map Images <| Decode.field "original_still" <| Decode.map Image <| Decode.field "url" Decode.string
 
 
 
