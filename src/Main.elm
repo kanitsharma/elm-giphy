@@ -47,52 +47,6 @@ model =
     Model "" ({ data = [] }) "TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS" False []
 
 
-type alias Urls =
-    { data : List Url
-    }
-
-
-type alias Url =
-    { id : String
-    , url : Images
-    }
-
-
-type alias Images =
-    { images : Image
-    }
-
-
-type alias Image =
-    { url : String
-    }
-
-
-decodeGif : Decode.Decoder Urls
-decodeGif =
-    Decode.map Urls << Decode.field "data" <| decodeList
-
-
-decodeList : Decode.Decoder (List Url)
-decodeList =
-    Decode.list decodeUrl
-
-
-decodeUrl : Decode.Decoder Url
-decodeUrl =
-    Decode.map2 Url
-        (Decode.field "id" Decode.string)
-        (Decode.field "images"
-            (Decode.map Images
-                (Decode.field "original"
-                    (Decode.map Image
-                        (Decode.field "url" Decode.string)
-                    )
-                )
-            )
-        )
-
-
 
 -- UPDATE
 
@@ -148,6 +102,56 @@ fetchGifs tag =
             "https://api.giphy.com/v1/gifs/search?q=" ++ tag ++ "&api_key=" ++ model.api_key
     in
         Http.send NewGifs (Http.get url <| decodeGif)
+
+
+
+--Decoders
+
+
+type alias Urls =
+    { data : List Url
+    }
+
+
+type alias Url =
+    { id : String
+    , url : Images
+    }
+
+
+type alias Images =
+    { images : Image
+    }
+
+
+type alias Image =
+    { url : String
+    }
+
+
+decodeGif : Decode.Decoder Urls
+decodeGif =
+    Decode.map Urls << Decode.field "data" <| decodeList
+
+
+decodeList : Decode.Decoder (List Url)
+decodeList =
+    Decode.list decodeUrl
+
+
+decodeUrl : Decode.Decoder Url
+decodeUrl =
+    Decode.map2 Url
+        (Decode.field "id" Decode.string)
+        (Decode.field "images"
+            (Decode.map Images
+                (Decode.field "original"
+                    (Decode.map Image
+                        (Decode.field "url" Decode.string)
+                    )
+                )
+            )
+        )
 
 
 
