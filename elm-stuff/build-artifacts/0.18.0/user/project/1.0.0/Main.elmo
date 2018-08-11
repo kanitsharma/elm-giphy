@@ -1,18 +1,84 @@
-var _user$project$Main$gitSection = function (model) {
+var _user$project$Main$loader = function (model) {
+	var _p0 = model.showLoader;
+	if (_p0 === false) {
+		return A2(
+			_elm_lang$html$Html$div,
+			{ctor: '[]'},
+			{ctor: '[]'});
+	} else {
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$class('loader'),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('centered'),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$div,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$class('blob-1'),
+								_1: {ctor: '[]'}
+							},
+							{ctor: '[]'}),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$div,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$class('blob-2'),
+									_1: {ctor: '[]'}
+								},
+								{ctor: '[]'}),
+							_1: {ctor: '[]'}
+						}
+					}),
+				_1: {ctor: '[]'}
+			});
+	}
+};
+var _user$project$Main$gifSection = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
-		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('gifs'),
+			_1: {ctor: '[]'}
+		},
 		A2(
 			_elm_lang$core$List$map,
 			function (x) {
 				return A2(
-					_elm_lang$html$Html$img,
+					_elm_lang$html$Html$div,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$src(x.url.images.url),
+						_0: _elm_lang$html$Html_Attributes$class('gif'),
 						_1: {ctor: '[]'}
 					},
-					{ctor: '[]'});
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$img,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$src(x.url.images.url),
+								_1: {ctor: '[]'}
+							},
+							{ctor: '[]'}),
+						_1: {ctor: '[]'}
+					});
 			},
 			model.gifs.data));
 };
@@ -37,17 +103,18 @@ var _user$project$Main$header = function (model) {
 			_1: {ctor: '[]'}
 		});
 };
-var _user$project$Main$Model = F3(
-	function (a, b, c) {
-		return {searchText: a, gifs: b, api_key: c};
+var _user$project$Main$Model = F4(
+	function (a, b, c, d) {
+		return {searchText: a, gifs: b, api_key: c, showLoader: d};
 	});
-var _user$project$Main$model = A3(
+var _user$project$Main$model = A4(
 	_user$project$Main$Model,
 	'',
 	{
 		data: {ctor: '[]'}
 	},
-	'TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS');
+	'TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS',
+	false);
 var _user$project$Main$init = {ctor: '_Tuple2', _0: _user$project$Main$model, _1: _elm_lang$core$Platform_Cmd$none};
 var _user$project$Main$Urls = function (a) {
 	return {data: a};
@@ -61,7 +128,7 @@ var _user$project$Main$Images = function (a) {
 var _user$project$Main$Image = function (a) {
 	return {url: a};
 };
-var _user$project$Main$decodeUrl = function (_p0) {
+var _user$project$Main$decodeUrl = function (_p1) {
 	return A2(
 		_elm_lang$core$Json_Decode$map,
 		_user$project$Main$Url,
@@ -77,14 +144,14 @@ var _user$project$Main$decodeUrl = function (_p0) {
 					A2(
 						_elm_lang$core$Json_Decode$map,
 						_user$project$Main$Image,
-						A2(_elm_lang$core$Json_Decode$field, 'url', _p0))))));
+						A2(_elm_lang$core$Json_Decode$field, 'url', _p1))))));
 }(_elm_lang$core$Json_Decode$string);
 var _user$project$Main$decodeList = _elm_lang$core$Json_Decode$list(_user$project$Main$decodeUrl);
-var _user$project$Main$decodeGif = function (_p1) {
+var _user$project$Main$decodeGif = function (_p2) {
 	return A2(
 		_elm_lang$core$Json_Decode$map,
 		_user$project$Main$Urls,
-		A2(_elm_lang$core$Json_Decode$field, 'data', _p1));
+		A2(_elm_lang$core$Json_Decode$field, 'data', _p2));
 }(_user$project$Main$decodeList);
 var _user$project$Main$NewGifs = function (a) {
 	return {ctor: 'NewGifs', _0: a};
@@ -97,38 +164,40 @@ var _user$project$Main$fetchGifs = function (tag) {
 			_elm_lang$core$Basics_ops['++'],
 			tag,
 			A2(_elm_lang$core$Basics_ops['++'], '&api_key=', _user$project$Main$model.api_key)));
-	return function (_p2) {
+	return function (_p3) {
 		return A2(
 			_elm_lang$http$Http$send,
 			_user$project$Main$NewGifs,
-			A2(_elm_lang$http$Http$get, url, _p2));
+			A2(_elm_lang$http$Http$get, url, _p3));
 	}(_user$project$Main$decodeGif);
 };
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p3 = msg;
-		switch (_p3.ctor) {
+		var _p4 = msg;
+		switch (_p4.ctor) {
 			case 'UpdateText':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{searchText: _p3._0}),
+						{searchText: _p4._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'SearchGif':
 				return {
 					ctor: '_Tuple2',
-					_0: model,
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{showLoader: true}),
 					_1: _user$project$Main$fetchGifs(model.searchText)
 				};
 			default:
-				if (_p3._0.ctor === 'Ok') {
+				if (_p4._0.ctor === 'Ok') {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{gifs: _p3._0._0}),
+							{gifs: _p4._0._0, showLoader: false}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				} else {
@@ -157,7 +226,7 @@ var _user$project$Main$inputSection = function (model) {
 					_0: _elm_lang$html$Html_Attributes$type_('text'),
 					_1: {
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$placeholder('search '),
+						_0: _elm_lang$html$Html_Attributes$placeholder('Search '),
 						_1: {
 							ctor: '::',
 							_0: _elm_lang$html$Html_Events$onInput(_user$project$Main$UpdateText),
@@ -204,8 +273,12 @@ var _user$project$Main$view = function (model) {
 				_0: _user$project$Main$inputSection(model),
 				_1: {
 					ctor: '::',
-					_0: _user$project$Main$gitSection(model),
-					_1: {ctor: '[]'}
+					_0: _user$project$Main$gifSection(model),
+					_1: {
+						ctor: '::',
+						_0: _user$project$Main$loader(model),
+						_1: {ctor: '[]'}
+					}
 				}
 			}
 		});
@@ -215,7 +288,7 @@ var _user$project$Main$main = _elm_lang$html$Html$program(
 		init: _user$project$Main$init,
 		view: _user$project$Main$view,
 		update: _user$project$Main$update,
-		subscriptions: function (_p4) {
+		subscriptions: function (_p5) {
 			return _elm_lang$core$Platform_Sub$none;
 		}
 	})();

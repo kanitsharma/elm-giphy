@@ -30,12 +30,13 @@ type alias Model =
     { searchText : String
     , gifs : Urls
     , api_key : String
+    , showLoader : Bool
     }
 
 
 model : Model
 model =
-    Model "" ({ data = [] }) "TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS"
+    Model "" ({ data = [] }) "TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS" False
 
 
 type alias Urls =
@@ -97,10 +98,10 @@ update msg model =
             ( { model | searchText = str }, Cmd.none )
 
         SearchGif ->
-            ( model, fetchGifs model.searchText )
+            ( { model | showLoader = True }, fetchGifs model.searchText )
 
         NewGifs (Ok urls) ->
-            ( { model | gifs = urls }, Cmd.none )
+            ( { model | gifs = urls, showLoader = False }, Cmd.none )
 
         NewGifs (Err _) ->
             ( model, Cmd.none )
@@ -138,7 +139,7 @@ inputSection model =
     div
         [ class "input_container" ]
         [ input
-            [ type_ "text", placeholder "search ", onInput UpdateText ]
+            [ type_ "text", placeholder "Search ", onInput UpdateText ]
             []
         , input
             [ type_ "submit", Html.Attributes.value "Search", onClick SearchGif ]
@@ -146,9 +147,34 @@ inputSection model =
         ]
 
 
-gitSection : Model -> Html Msg
-gitSection model =
-    div [] (List.map (\x -> img [ src x.url.images.url ] []) model.gifs.data)
+gifSection : Model -> Html Msg
+gifSection model =
+    div [ class "gifs" ]
+        (List.map
+            (\x ->
+                (div [ class "gif" ]
+                    [ img [ src x.url.images.url ] []
+                    ]
+                )
+            )
+            model.gifs.data
+        )
+
+
+loader : Model -> Html Msg
+loader model =
+    case model.showLoader of
+        False ->
+            div [] []
+
+        True ->
+            div [ class "loader" ]
+                [ div
+                    [ class "centered" ]
+                    [ div [ class "blob-1" ] []
+                    , div [ class "blob-2" ] []
+                    ]
+                ]
 
 
 view : Model -> Html.Html Msg
@@ -156,5 +182,6 @@ view model =
     div [ class "main_container" ]
         [ header model
         , inputSection model
-        , gitSection model
+        , gifSection model
+        , loader model
         ]
