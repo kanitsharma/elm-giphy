@@ -31,12 +31,20 @@ type alias Model =
     , gifs : Urls
     , api_key : String
     , showLoader : Bool
+    , loaders : List Loader
+    }
+
+
+type alias Loader =
+    { id : String
+    , showImgLoader : Bool
+    , url : String
     }
 
 
 model : Model
 model =
-    Model "" ({ data = [] }) "TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS" False
+    Model "" ({ data = [] }) "TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS" False []
 
 
 type alias Urls =
@@ -45,7 +53,8 @@ type alias Urls =
 
 
 type alias Url =
-    { url : Images
+    { id : String
+    , url : Images
     }
 
 
@@ -71,14 +80,17 @@ decodeList =
 
 decodeUrl : Decode.Decoder Url
 decodeUrl =
-    Decode.map Url
-        << Decode.field "images"
-        << Decode.map Images
-        << Decode.field "original_still"
-        << Decode.map Image
-        << Decode.field "url"
-    <|
-        Decode.string
+    Decode.map2 Url
+        (Decode.field "id" Decode.string)
+        (Decode.field "images"
+            (Decode.map Images
+                (Decode.field "original"
+                    (Decode.map Image
+                        (Decode.field "url" Decode.string)
+                    )
+                )
+            )
+        )
 
 
 
@@ -89,6 +101,7 @@ type Msg
     = UpdateText String
     | SearchGif
     | NewGifs (Result Http.Error Urls)
+    | StopImgLoader String String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -101,10 +114,27 @@ update msg model =
             ( { model | showLoader = True }, fetchGifs model.searchText )
 
         NewGifs (Ok urls) ->
-            ( { model | gifs = urls, showLoader = False }, Cmd.none )
+            ( { model | gifs = urls, showLoader = False, loaders = List.map (\x -> { id = x.id, showImgLoader = True, url = x.url.images.url }) urls.data }, Cmd.none )
 
         NewGifs (Err _) ->
             ( model, Cmd.none )
+
+        StopImgLoader id a ->
+            ( { model
+                | loaders =
+                    List.map
+                        (\x ->
+                            case x.id == id of
+                                True ->
+                                    { x | showImgLoader = False }
+
+                                False ->
+                                    x
+                        )
+                        model.loaders
+              }
+            , Cmd.none
+            )
 
 
 
@@ -117,7 +147,7 @@ fetchGifs tag =
         url =
             "https://api.giphy.com/v1/gifs/search?q=" ++ tag ++ "&api_key=" ++ model.api_key
     in
-        Http.send NewGifs << Http.get url <| decodeGif
+        Http.send NewGifs (Http.get url <| decodeGif)
 
 
 
@@ -136,8 +166,8 @@ header model =
 
 inputSection : Model -> Html Msg
 inputSection model =
-    div
-        [ class "input_container" ]
+    Html.form
+        [ class "input_container", onWithOptions "submit" { stopPropagation = True, preventDefault = True } (Decode.succeed SearchGif) ]
         [ input
             [ type_ "text", placeholder "Search ", onInput UpdateText ]
             []
@@ -147,22 +177,52 @@ inputSection model =
         ]
 
 
+onLoadSrc : (String -> msg) -> Html.Attribute msg
+onLoadSrc tagger =
+    on "load" (Decode.map tagger targetSrc)
+
+
+targetSrc : Decode.Decoder String
+targetSrc =
+    Decode.at [ "target", "src" ] Decode.string
+
+
 gifSection : Model -> Html Msg
 gifSection model =
     div [ class "gifs" ]
         (List.map
             (\x ->
-                (div [ class "gif" ]
-                    [ img [ src x.url.images.url ] []
+                div [ class "imgContainer" ]
+                    [ div
+                        [ class "gif" ]
+                        [ img
+                            [ src x.url
+                            , onLoadSrc (StopImgLoader x.id)
+                            , class
+                                (case x.showImgLoader of
+                                    True ->
+                                        "hide"
+
+                                    False ->
+                                        ""
+                                )
+                            ]
+                            []
+                        , case x.showImgLoader of
+                            True ->
+                                div [ class "lds-hourglass" ] []
+
+                            False ->
+                                div [] []
+                        ]
                     ]
-                )
             )
-            model.gifs.data
+            model.loaders
         )
 
 
-loader : Model -> Html Msg
-loader model =
+loaderSection : Model -> Html Msg
+loaderSection model =
     case model.showLoader of
         False ->
             div [] []
@@ -183,5 +243,5 @@ view model =
         [ header model
         , inputSection model
         , gifSection model
-        , loader model
+        , loaderSection model
         ]
