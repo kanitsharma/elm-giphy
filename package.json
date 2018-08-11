@@ -4,6 +4,6 @@
   },
   "homepage": "https://kanitsharma.github.io/elm-giphy",
   "scripts": {
-    "deploy": "gh-pages -d build"
+    "deploy": "elm-app build && gh-pages -d build"
   }
 }

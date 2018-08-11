@@ -19,7 +19,7 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( model, Cmd.none )
+    ( model, fetchGifs model.searchText )
 
 
 
@@ -44,7 +44,7 @@ type alias Loader =
 
 model : Model
 model =
-    Model "" ({ data = [] }) "TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS" False []
+    Model "Dogs" ({ data = [] }) "TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS" False []
 
 
 
@@ -173,7 +173,7 @@ inputSection model =
     Html.form
         [ class "input_container", onWithOptions "submit" { stopPropagation = True, preventDefault = True } (Decode.succeed SearchGif) ]
         [ input
-            [ type_ "text", placeholder "Search ", onInput UpdateText ]
+            [ type_ "text", placeholder "Search ", onInput UpdateText, value model.searchText ]
             []
         , input
             [ type_ "submit", Html.Attributes.value "Search", onClick SearchGif ]
@@ -193,11 +193,11 @@ targetSrc =
 
 gifSection : Model -> Html Msg
 gifSection model =
-    div [ class "gifs" ]
-        (List.map
-            (\x ->
-                div [ class "imgContainer" ]
-                    [ div
+    div [ class "overflow_container" ]
+        [ div [ class "gifs" ]
+            (List.map
+                (\x ->
+                    div
                         [ class "gif" ]
                         [ img
                             [ src x.url
@@ -219,10 +219,10 @@ gifSection model =
                             False ->
                                 div [] []
                         ]
-                    ]
+                )
+                model.loaders
             )
-            model.loaders
-        )
+        ]
 
 
 loaderSection : Model -> Html Msg
