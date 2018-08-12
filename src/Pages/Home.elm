@@ -119,13 +119,15 @@ decodeGifs =
 inputSection : String -> Html Msg
 inputSection searchText =
     Html.form
-        [ class "input_container", onWithOptions "submit" { stopPropagation = True, preventDefault = True } (Decode.succeed SearchGif) ]
-        [ input
-            [ type_ "text", placeholder "Search ", onInput UpdateText, value searchText ]
-            []
-        , input
-            [ type_ "submit", Html.Attributes.value "Search", onClick SearchGif ]
-            []
+        [ onWithOptions "submit" { stopPropagation = True, preventDefault = True } (Decode.succeed SearchGif) ]
+        [ div [ class "input_container" ]
+            [ input
+                [ type_ "text", placeholder "Search ", onInput UpdateText, value searchText ]
+                []
+            , input
+                [ type_ "submit", Html.Attributes.value "Search", onClick SearchGif ]
+                []
+            ]
         ]
 
 
