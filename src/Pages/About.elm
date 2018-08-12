@@ -2,6 +2,8 @@ module Pages.About exposing (Model, init, view, update, Msg)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
+import Json.Decode as Decode
 
 
 type alias Model =
@@ -23,12 +25,37 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         StopImgLoader ->
-            model
+            { model | showImgLoader = False }
+
+
+onLoad : Msg -> Html.Attribute Msg
+onLoad msg =
+    on "load" << Decode.succeed <| msg
 
 
 view : Model -> Html Msg
 view model =
     div [ class "about_container" ]
-        [ img [ src model.imgSrc, width 300, height 300 ] []
-        , div [ class "about_title" ] [ text "Made with Elm and ♥" ]
+        [ img
+            [ src model.imgSrc
+            , width 300
+            , height 300
+            , onLoad StopImgLoader
+            , class
+                (case model.showImgLoader of
+                    True ->
+                        "hide"
+
+                    False ->
+                        ""
+                )
+            ]
+            []
+        , (case model.showImgLoader of
+            True ->
+                div [ class "lds-hourglass center" ] []
+
+            False ->
+                div [ class "about_title" ] [ text "Made with Elm and ♥" ]
+          )
         ]

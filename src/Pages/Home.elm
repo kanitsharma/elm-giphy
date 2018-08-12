@@ -48,7 +48,7 @@ type Msg
     = UpdateText String
     | SearchGif
     | NewGifs (Result Http.Error (List Gif))
-    | StopImgLoader Int String
+    | StopImgLoader Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -68,7 +68,7 @@ update msg model =
         NewGifs (Err _) ->
             ( model, Cmd.none )
 
-        StopImgLoader id a ->
+        StopImgLoader id ->
             ( { model
                 | gifs =
                     List.indexedMap
@@ -131,14 +131,9 @@ inputSection searchText =
         ]
 
 
-onLoadSrc : (String -> msg) -> Html.Attribute msg
-onLoadSrc tagger =
-    on "load" (Decode.map tagger targetSrc)
-
-
-targetSrc : Decode.Decoder String
-targetSrc =
-    Decode.at [ "target", "src" ] Decode.string
+onLoadSrc : (Int -> Msg) -> Int -> Html.Attribute Msg
+onLoadSrc msg i =
+    on "load" << Decode.succeed << msg <| i
 
 
 gifSection : List Gif -> Html Msg
@@ -151,7 +146,7 @@ gifSection gifs =
                         [ class "gif" ]
                         [ img
                             [ src x.url
-                            , onLoadSrc (StopImgLoader i)
+                            , onLoadSrc StopImgLoader i
                             , class
                                 (case x.showImgLoader of
                                     True ->
