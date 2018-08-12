@@ -5,21 +5,22 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode
+import Html.Lazy exposing (..)
 
 
 main : Program Never Model Msg
 main =
     Html.program
-        { init = init
+        { init = init model
         , view = view
         , update = update
         , subscriptions = \_ -> Sub.none
         }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( model, fetchGifs model.searchText )
+init : Model -> ( Model, Cmd Msg )
+init { api_url, searchText, api_key } =
+    ( model, fetchGifs api_url searchText api_key )
 
 
 
@@ -30,12 +31,8 @@ type alias Model =
     { searchText : String
     , gifs : List Gif
     , api_key : String
+    , api_url : String
     , showLoader : Bool
-    }
-
-
-type alias Gifs =
-    { gifs : List Gif
     }
 
 
@@ -48,7 +45,7 @@ type alias Gif =
 
 model : Model
 model =
-    Model "Dogs" [] "TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS" False
+    Model "Dogs" [] "TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS" "https://api.giphy.com/v1/gifs/search" False
 
 
 
@@ -58,7 +55,7 @@ model =
 type Msg
     = UpdateText String
     | SearchGif
-    | NewGifs (Result Http.Error Gifs)
+    | NewGifs (Result Http.Error (List Gif))
     | StopImgLoader String String
 
 
@@ -69,9 +66,9 @@ update msg model =
             ( { model | searchText = str }, Cmd.none )
 
         SearchGif ->
-            ( { model | showLoader = True }, fetchGifs model.searchText )
+            ( { model | showLoader = True }, fetchGifs model.api_url model.searchText model.api_key )
 
-        NewGifs (Ok { gifs }) ->
+        NewGifs (Ok gifs) ->
             ( { model
                 | gifs = gifs
                 , showLoader = False
@@ -104,11 +101,11 @@ update msg model =
 --Commands
 
 
-fetchGifs : String -> Cmd Msg
-fetchGifs tag =
+fetchGifs : String -> String -> String -> Cmd Msg
+fetchGifs api query key =
     let
         url =
-            "https://api.giphy.com/v1/gifs/search?q=" ++ tag ++ "&api_key=" ++ model.api_key
+            api ++ "?q=" ++ query ++ "&api_key=" ++ key
     in
         Http.send NewGifs (Http.get url <| decodeGifs)
 
@@ -117,15 +114,11 @@ fetchGifs tag =
 --Decoders
 
 
-decodeGifs : Decode.Decoder Gifs
+decodeGifs : Decode.Decoder (List Gif)
 decodeGifs =
-    Decode.map Gifs (Decode.at [ "data" ] decodeGif)
-
-
-decodeGif : Decode.Decoder (List Gif)
-decodeGif =
-    Decode.list
-        (Decode.map2 (Gif True)
+    (Decode.list >> Decode.at [ "data" ])
+        (Decode.map2
+            (Gif True)
             (Decode.at [ "id" ] Decode.string)
             (Decode.at [ "images", "original", "url" ] Decode.string)
         )
@@ -135,8 +128,8 @@ decodeGif =
 -- VIEW
 
 
-header : Model -> Html Msg
-header model =
+header : Html Msg
+header =
     div
         [ class "header_container" ]
         [ div
@@ -168,8 +161,8 @@ targetSrc =
     Decode.at [ "target", "src" ] Decode.string
 
 
-gifSection : Model -> Html Msg
-gifSection model =
+gifSection : List Gif -> Html Msg
+gifSection gifs =
     div [ class "overflow_container" ]
         [ div [ class "gifs" ]
             (List.map
@@ -197,14 +190,14 @@ gifSection model =
                                 div [] []
                         ]
                 )
-                model.gifs
+                gifs
             )
         ]
 
 
-loaderSection : Model -> Html Msg
-loaderSection model =
-    case model.showLoader of
+loaderSection : Bool -> Html Msg
+loaderSection showLoader =
+    case showLoader of
         False ->
             div [] []
 
@@ -221,8 +214,8 @@ loaderSection model =
 view : Model -> Html.Html Msg
 view model =
     div [ class "main_container" ]
-        [ header model
+        [ header
         , inputSection model
-        , gifSection model
-        , loaderSection model
+        , lazy gifSection model.gifs
+        , lazy loaderSection model.showLoader
         ]
