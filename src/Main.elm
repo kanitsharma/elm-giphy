@@ -28,23 +28,27 @@ init =
 
 type alias Model =
     { searchText : String
-    , gifs : Urls
+    , gifs : List Gif
     , api_key : String
     , showLoader : Bool
-    , loaders : List Loader
     }
 
 
-type alias Loader =
-    { id : String
-    , showImgLoader : Bool
+type alias Gifs =
+    { gifs : List Gif
+    }
+
+
+type alias Gif =
+    { showImgLoader : Bool
+    , id : String
     , url : String
     }
 
 
 model : Model
 model =
-    Model "Dogs" ({ data = [] }) "TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS" False []
+    Model "Dogs" [] "TFY6tJ4s3i9MtFhW897SLn2ydN2Wa2zS" False
 
 
 
@@ -54,7 +58,7 @@ model =
 type Msg
     = UpdateText String
     | SearchGif
-    | NewGifs (Result Http.Error Urls)
+    | NewGifs (Result Http.Error Gifs)
     | StopImgLoader String String
 
 
@@ -67,15 +71,20 @@ update msg model =
         SearchGif ->
             ( { model | showLoader = True }, fetchGifs model.searchText )
 
-        NewGifs (Ok urls) ->
-            ( { model | gifs = urls, showLoader = False, loaders = List.map (\x -> { id = x.id, showImgLoader = True, url = x.url.images.url }) urls.data }, Cmd.none )
+        NewGifs (Ok { gifs }) ->
+            ( { model
+                | gifs = gifs
+                , showLoader = False
+              }
+            , Cmd.none
+            )
 
         NewGifs (Err _) ->
             ( model, Cmd.none )
 
         StopImgLoader id a ->
             ( { model
-                | loaders =
+                | gifs =
                     List.map
                         (\x ->
                             case x.id == id of
@@ -85,7 +94,7 @@ update msg model =
                                 False ->
                                     x
                         )
-                        model.loaders
+                        model.gifs
               }
             , Cmd.none
             )
@@ -101,56 +110,24 @@ fetchGifs tag =
         url =
             "https://api.giphy.com/v1/gifs/search?q=" ++ tag ++ "&api_key=" ++ model.api_key
     in
-        Http.send NewGifs (Http.get url <| decodeGif)
+        Http.send NewGifs (Http.get url <| decodeGifs)
 
 
 
 --Decoders
 
 
-type alias Urls =
-    { data : List Url
-    }
+decodeGifs : Decode.Decoder Gifs
+decodeGifs =
+    Decode.map Gifs (Decode.at [ "data" ] decodeGif)
 
 
-type alias Url =
-    { id : String
-    , url : Images
-    }
-
-
-type alias Images =
-    { images : Image
-    }
-
-
-type alias Image =
-    { url : String
-    }
-
-
-decodeGif : Decode.Decoder Urls
+decodeGif : Decode.Decoder (List Gif)
 decodeGif =
-    Decode.map Urls << Decode.field "data" <| decodeList
-
-
-decodeList : Decode.Decoder (List Url)
-decodeList =
-    Decode.list decodeUrl
-
-
-decodeUrl : Decode.Decoder Url
-decodeUrl =
-    Decode.map2 Url
-        (Decode.field "id" Decode.string)
-        (Decode.field "images"
-            (Decode.map Images
-                (Decode.field "original"
-                    (Decode.map Image
-                        (Decode.field "url" Decode.string)
-                    )
-                )
-            )
+    Decode.list
+        (Decode.map2 (Gif True)
+            (Decode.at [ "id" ] Decode.string)
+            (Decode.at [ "images", "original", "url" ] Decode.string)
         )
 
 
@@ -220,7 +197,7 @@ gifSection model =
                                 div [] []
                         ]
                 )
-                model.loaders
+                model.gifs
             )
         ]
 
