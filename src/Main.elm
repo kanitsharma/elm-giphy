@@ -5,7 +5,6 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode
-import Html.Lazy exposing (..)
 
 
 main : Program Never Model Msg
@@ -20,7 +19,7 @@ main =
 
 init : Model -> ( Model, Cmd Msg )
 init { api_url, searchText, api_key } =
-    ( model, fetchGifs api_url searchText api_key )
+    ( { model | showLoader = True }, fetchGifs api_url searchText api_key )
 
 
 
@@ -38,7 +37,6 @@ type alias Model =
 
 type alias Gif =
     { showImgLoader : Bool
-    , id : String
     , url : String
     }
 
@@ -56,7 +54,7 @@ type Msg
     = UpdateText String
     | SearchGif
     | NewGifs (Result Http.Error (List Gif))
-    | StopImgLoader String String
+    | StopImgLoader Int String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -82,9 +80,9 @@ update msg model =
         StopImgLoader id a ->
             ( { model
                 | gifs =
-                    List.map
-                        (\x ->
-                            case x.id == id of
+                    List.indexedMap
+                        (\i x ->
+                            case i == id of
                                 True ->
                                     { x | showImgLoader = False }
 
@@ -117,9 +115,8 @@ fetchGifs api query key =
 decodeGifs : Decode.Decoder (List Gif)
 decodeGifs =
     (Decode.list >> Decode.at [ "data" ])
-        (Decode.map2
+        (Decode.map
             (Gif True)
-            (Decode.at [ "id" ] Decode.string)
             (Decode.at [ "images", "original", "url" ] Decode.string)
         )
 
@@ -165,13 +162,13 @@ gifSection : List Gif -> Html Msg
 gifSection gifs =
     div [ class "overflow_container" ]
         [ div [ class "gifs" ]
-            (List.map
-                (\x ->
+            (List.indexedMap
+                (\i x ->
                     div
                         [ class "gif" ]
                         [ img
                             [ src x.url
-                            , onLoadSrc (StopImgLoader x.id)
+                            , onLoadSrc (StopImgLoader i)
                             , class
                                 (case x.showImgLoader of
                                     True ->
@@ -216,6 +213,6 @@ view model =
     div [ class "main_container" ]
         [ header
         , inputSection model
-        , lazy gifSection model.gifs
-        , lazy loaderSection model.showLoader
+        , gifSection model.gifs
+        , loaderSection model.showLoader
         ]
