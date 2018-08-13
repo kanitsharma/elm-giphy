@@ -50,6 +50,12 @@
   flex-direction: column;
   height: 92%;
   width: 100%;
+  opacity: 1;
+  transition: all 0.2s linear;
+}
+
+.opaque {
+  opacity: 0;
 }
 
 .input_container {
@@ -156,6 +162,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s linear;
 }
 
 .about_title {

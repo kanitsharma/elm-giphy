@@ -186,9 +186,18 @@ loaderSection showLoader =
                 ]
 
 
-view : Model -> Html Msg
-view model =
-    div [ class "home_container" ]
+view : Model -> Bool -> Html Msg
+view model transition =
+    div
+        [ class
+            (case transition of
+                True ->
+                    "home_container opaque"
+
+                False ->
+                    "home_container"
+            )
+        ]
         [ inputSection model.searchText
         , gifSection model.gifs
         , loaderSection model.showLoader

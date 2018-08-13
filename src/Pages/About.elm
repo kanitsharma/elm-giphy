@@ -33,9 +33,18 @@ onLoad msg =
     on "load" << Decode.succeed <| msg
 
 
-view : Model -> Html Msg
-view model =
-    div [ class "about_container" ]
+view : Model -> Bool -> Html Msg
+view model transition =
+    div
+        [ class
+            (case transition of
+                True ->
+                    "about_container opaque"
+
+                False ->
+                    "about_container"
+            )
+        ]
         [ img
             [ src model.imgSrc
             , width 300

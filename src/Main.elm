@@ -5,6 +5,9 @@ import Html.Attributes exposing (..)
 import Navigation
 import Pages.Home as Home
 import Pages.About as About
+import Time exposing (..)
+import Process as Process
+import Task as Task
 
 
 main : Program Never Model Msg
@@ -30,6 +33,7 @@ type alias Model =
     { route : Route
     , homeModel : Home.Model
     , aboutModel : About.Model
+    , transition : Bool
     }
 
 
@@ -39,7 +43,7 @@ init location =
         ( initHomeModel, initSubCmd ) =
             Home.init
     in
-        ( Model HomeRoute initHomeModel About.init, Cmd.map HomeMsg initSubCmd )
+        ( Model HomeRoute initHomeModel About.init False, Cmd.map HomeMsg initSubCmd )
 
 
 
@@ -50,30 +54,27 @@ type Msg
     = UrlChange Navigation.Location
     | HomeMsg Home.Msg
     | AboutMsg About.Msg
+    | ChangeUrlMsg Route
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let
-        homeModal =
-            model.homeModel
+    case msg of
+        UrlChange location ->
+            ( { model | transition = True }, delay 200 (ChangeUrlMsg <| (getRoute location.hash)) )
 
-        aboutModel =
-            model.aboutModel
-    in
-        case msg of
-            UrlChange location ->
-                ( { model | route = (getRoute location.hash) }, Cmd.none )
+        ChangeUrlMsg route ->
+            ( { model | route = route, transition = False }, Cmd.none )
 
-            HomeMsg homeMsg ->
-                let
-                    ( subModel, subCmd ) =
-                        Home.update homeMsg model.homeModel
-                in
-                    ( { model | homeModel = subModel }, Cmd.map HomeMsg subCmd )
+        HomeMsg homeMsg ->
+            let
+                ( subModel, subCmd ) =
+                    Home.update homeMsg model.homeModel
+            in
+                ( { model | homeModel = subModel }, Cmd.map HomeMsg subCmd )
 
-            AboutMsg aboutMsg ->
-                ( { model | aboutModel = About.update aboutMsg aboutModel }, Cmd.none )
+        AboutMsg aboutMsg ->
+            ( { model | aboutModel = About.update aboutMsg model.aboutModel }, Cmd.none )
 
 
 getRoute : String -> Route
@@ -87,6 +88,17 @@ getRoute hash =
 
         _ ->
             HomeRoute
+
+
+
+-- Side Effects
+
+
+delay : Time.Time -> Msg -> Cmd Msg
+delay time msg =
+    Process.sleep time
+        |> Task.andThen (always <| Task.succeed msg)
+        |> Task.perform identity
 
 
 
@@ -117,8 +129,8 @@ view model =
         [ header
         , case model.route of
             HomeRoute ->
-                Html.map HomeMsg (Home.view model.homeModel)
+                Html.map HomeMsg (Home.view model.homeModel model.transition)
 
             AboutRoute ->
-                Html.map AboutMsg (About.view model.aboutModel)
+                Html.map AboutMsg (About.view model.aboutModel model.transition)
         ]
