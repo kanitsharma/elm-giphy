@@ -12,7 +12,7 @@ import Task as Task
 
 main : Program Never Model Msg
 main =
-    Navigation.program UrlChange
+    Navigation.program TriggerAnimation
         { init = init
         , view = view
         , update = update
@@ -51,7 +51,7 @@ init location =
 
 
 type Msg
-    = UrlChange Navigation.Location
+    = TriggerAnimation Navigation.Location
     | HomeMsg Home.Msg
     | AboutMsg About.Msg
     | ChangeUrlMsg Route
@@ -60,7 +60,7 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        UrlChange location ->
+        TriggerAnimation location ->
             ( { model | transition = True }, delay 200 (ChangeUrlMsg <| (getRoute location.hash)) )
 
         ChangeUrlMsg route ->

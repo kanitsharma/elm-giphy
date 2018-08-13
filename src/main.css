@@ -54,7 +54,7 @@
   transition: all 0.2s linear;
 }
 
-.opaque {
+.animate {
   opacity: 0;
 }
 

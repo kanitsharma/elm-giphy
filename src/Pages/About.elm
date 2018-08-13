@@ -39,7 +39,7 @@ view model transition =
         [ class
             (case transition of
                 True ->
-                    "about_container opaque"
+                    "about_container animate"
 
                 False ->
                     "about_container"
